@@ -82,8 +82,7 @@ class Helper:
 
 
 
-    def load(self, name):
-         path = self.model_directory + name
+    def load(self, path):
          model = load_model(path)
          return model
 
