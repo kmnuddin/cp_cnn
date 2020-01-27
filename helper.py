@@ -19,9 +19,9 @@ class Helper:
         self.y_true = []
 
 
-    def construct_data_generator(self, batch_size=128, validation_split=None, target_size=(224,224), shuffle=True):
+    def construct_data_generator(self, rescale=None, batch_size=128, validation_split=None, target_size=(224,224), shuffle=True):
 
-        datagen = ImageDataGenerator(rescale=1./255, validation_split=validation_split)
+        datagen = ImageDataGenerator(rescale=rescale, validation_split=validation_split)
 
         train_it = datagen.flow_from_directory(self.train_directory, batch_size=batch_size,
                                            target_size=target_size, shuffle=shuffle, subset='training')
@@ -36,17 +36,20 @@ class Helper:
 
         return train_it, validation_it, test_it
 
-    def construct_data_generator_w_validation(self, batch_size=128, target_size=(224,224), shuffle=True):
+    def construct_data_generator_w_validation(self, rescale=None, batch_size=128, target_size=(224,224), shuffle=True):
 
-        datagen = ImageDataGenerator(rescale=1./255)
+        train_datagen = ImageDataGenerator(rescale=rescale, rotation_range=40, width_shift_range=0.2,
+                                     height_shift_range=0.2, shear_range=0.2, zoom_range=0.2, horizontal_flip=True)
 
-        train_it = datagen.flow_from_directory(self.train_directory, batch_size=batch_size,
-                                           target_size=target_size, shuffle=shuffle )
+        train_it = train_datagen.flow_from_directory(self.train_directory, batch_size=batch_size,
+                                      target_size=target_size, shuffle=shuffle, save_to_dir='data/augmented_imgs/train/')
 
-        validation_it = datagen.flow_from_directory(self.validation_directory, batch_size=batch_size,
-                                                target_size=target_size, shuffle=shuffle)
+        validation_it = train_datagen.flow_from_directory(self.validation_directory, batch_size=batch_size,
+                                      target_size=target_size, shuffle=shuffle, save_to_dir='data/augmented_imgs/validation/')
+        
+        test_datagen = ImageDataGenerator(rescale=rescale)
 
-        test_it = datagen.flow_from_directory(self.test_directory, batch_size=batch_size,
+        test_it = test_datagen.flow_from_directory(self.test_directory, batch_size=batch_size,
                                           target_size=target_size, shuffle=False)
 
         self.y_true = test_it.classes
@@ -82,8 +85,7 @@ class Helper:
 
 
 
-    def load(self, name):
-         path = self.model_directory + name
+    def load(self, path):
          model = load_model(path)
          return model
 
